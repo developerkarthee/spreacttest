@@ -2,16 +2,21 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Table from 'react-bootstrap/Table';
 import './Home.css';
-
+import  LineChart from 'react-linechart';
 import uparrow from './grayarrow.gif';
 import Apicontext from './service/Apicontext';
 import { BrowserRouter as Router, withRouter, Route, Redirect, useHistory, Link } from 'react-router-dom';
 class Home extends Component {
-
+     
     state = null;
     constructor(props) {
         super(props);
-        this.state = { pageID: null, data: {} };
+        this.state = { pageID: null, data: {}, chartdata : [
+            {									
+                color: "steelblue", 
+                points: [] 
+            }]
+        };
         this.HideClick = this.HideClick.bind(this)
     }
 
@@ -21,6 +26,8 @@ class Home extends Component {
         if (prevState && this.props.pageIndex != prevState.pageIndex) {
             console.log("previous", prevState);
             this.getValuesFromAPi(this.props.pageIndex);
+            //preparingmap((item)=>{}) data for chart
+            
         }
     }
     componentDidMount() {
@@ -31,7 +38,19 @@ class Home extends Component {
     getValuesFromAPi(paageId) {
         Apicontext.getRecords(paageId).then((res) => {
             this.setState({ data: { ...res.data } })
+            
         });
+    }
+
+    updateChart(){
+        if (this.state.data.hits && (this.state.data.hits instanceof Array)) {
+            let k = 0;
+            this.state.chartdata[0].points = this.state.data.hits.map((item) => {
+                k = k + 1;
+                return { id: item.objectID, x: k, y: item.votecount };
+            })
+            //this.setState({ chartdata: [...this.state.chartdata]  })
+        }
     }
 
     HideClick(item){
@@ -48,6 +67,7 @@ class Home extends Component {
                     
                     const hideKey = item.objectID + "hide";
                     const voteKey = item.objectID + "vote";
+                   
                     if(localStorage.hasOwnProperty(hideKey)){
                         item.show = localStorage.getItem(hideKey)
                     }
@@ -56,6 +76,9 @@ class Home extends Component {
                     }
                     item.votecount = item.votecount == undefined ? 0 : item.votecount;
                     item.show = item.show == undefined ? 0 : item.show;
+                    if(i == (this.state.data.hits.length -1)){
+                        this.updateChart();
+                    }
                     return <tr key={i}>
                         <td >{item.num_comments}</td>
                         <td>
@@ -103,6 +126,7 @@ class Home extends Component {
    }
 
     render() {
+        const $this = this;
         return (
                 <div>
                     <span >Active page :  {this.props.pageIndex
@@ -122,6 +146,39 @@ class Home extends Component {
                         }
 
                     </Table>
+                    <br>
+                    </br>
+                    <br>
+                    </br>
+                    <section>
+                     <LineChart 
+                        width={1200}
+                        height={400}
+                        ticks={100}
+                        yMin ={-5}
+                        pointRadius ={4}
+                        data={this.state.chartdata}
+                        xParser={(x)=>{
+                          
+                            return x;
+                        }}
+                        yLabel={"votes"}
+                        xLabel={"ID"}
+                        xDisplay= {(x)=>{
+                            
+                            if(x%1 == 0 && $this.state.chartdata[0].points){
+                               console.log($this.state.chartdata[0].points[x-1].id) 
+                                //return $this.state.chartdata[0].points[x-1].id;
+                                return x;
+                            }
+                                                    }}
+                        interpolate={"cardinal"}
+                        showLegends={true}
+                        labelClass={"svg-line-chart-label"}
+                    /> 
+                    
+
+                    </section>
                 </div>
         );
     }
