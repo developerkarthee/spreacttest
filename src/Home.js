@@ -198,7 +198,7 @@ export default withRouter(Home);
 function updateValueFromLocalStorage(item) {
     const lessKey = item.objectID + "less";
     const voteKey = item.objectID + "vote";
-    const hiderowKey = item.objectID + "vote";
+    const hiderowKey = item.objectID + "hide";
     if (localStorage.hasOwnProperty(lessKey)) {
         item.show = localStorage.getItem(lessKey);
     }
